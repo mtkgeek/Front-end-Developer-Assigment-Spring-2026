@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from "vue";
 import type { Task, TaskStatus } from "~/types/task";
 
 definePageMeta({
@@ -24,6 +25,7 @@ if (!task.value && !pending.value) {
 
 const isSaving = ref(false);
 const saveError = ref<string | null>(null);
+const showSuccess = ref(false);
 const editTitle = ref(task.value?.title || "");
 const editStatus = ref<TaskStatus>(task.value?.status || "todo");
 
@@ -47,6 +49,7 @@ const handleSave = async () => {
 
   isSaving.value = true;
   saveError.value = null;
+  showSuccess.value = false;
 
   try {
     await $fetch(`/api/tasks/${taskId}`, {
@@ -58,8 +61,10 @@ const handleSave = async () => {
     });
 
     await refresh();
-    // Show success message or redirect? Assignment doesn't specify.
-    // I'll just stay on page and show it's updated.
+    showSuccess.value = true;
+    setTimeout(() => {
+      showSuccess.value = false;
+    }, 3000);
   } catch (e: any) {
     saveError.value = e.data?.statusMessage || "Failed to update task";
   } finally {
@@ -191,6 +196,25 @@ const statusClasses = {
               />
             </svg>
             {{ saveError }}
+          </div>
+
+          <div
+            v-if="showSuccess"
+            class="p-4 bg-green-50 border border-green-100 rounded-xl flex items-start text-green-700 text-sm animate-in fade-in slide-in-from-top-2 duration-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 mr-2 flex-shrink-0"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Task updated successfully!
           </div>
 
           <div
